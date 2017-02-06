@@ -3,6 +3,7 @@ import logging
 import random
 from subprocess import Popen, PIPE
 import os
+import argparse
 
 class AiHandler:
     def __init__(self):
@@ -67,11 +68,17 @@ class Player:
         print "Name: {}, Cards: {}, Score: {}".format(self.name, self.cards, self.score)
 
 class SixNimmtGame:
-    def __init__(self, **kwarg):
+    def __init__(self, **kwargs):
         self.playerNum = 0
         self.rows = [[],[],[],[]]
         self.players = {}
         self.aiHandler = AiHandler()
+        self.broadCast = True
+        for key, val in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, val)
+            else:
+                raise Exception("Wrong keyword "+key)
 
     def AddPlayer(self, playerName, path):
         '''
@@ -193,7 +200,8 @@ class SixNimmtGame:
         return score
 
     def BroadCast(self, s):
-        print s
+        if self.broadCast:
+            print s
     def PrintData(self):
         print "Current Row:"
         for r in self.rows:
@@ -203,12 +211,19 @@ class SixNimmtGame:
             p.PrintData()
 
 if __name__ == '__main__':
-    game = SixNimmtGame()
-    game.AddPlayer('p1', './ai/example/exampleai.py')
-    game.AddPlayer('p2', './ai/example/exampleai.pyc')
-    game.AddPlayer('GT', './ai/gaotian/GTNimmt.py')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-r', type=int, default=100)
+    options = parser.parse_args()
+    game = SixNimmtGame(broadCast = False)
+    game.AddPlayer('p1', './ai/test/testai.py')
+    game.AddPlayer('p2', './ai/test/testai.py')
+    game.AddPlayer('p3', './ai/test/testai.py')
+    game.AddPlayer('p4', './ai/test/testai.py')
+    game.AddPlayer('p5', './ai/test/testai.py')
+    game.AddPlayer('p6', './ai/test/testai.py')
+    #game.AddPlayer('GT', './ai/gaotian/GTNimmt.py')
     #game.AddPlayer('Player', None)
     #game.NewGame()
-    game.StartTour(100)
+    game.StartTour(options.r)
     #handler = AiHandler()
     #handler.AddAi('stupid', './ai/stupid.py')
