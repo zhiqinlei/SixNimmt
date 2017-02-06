@@ -7,13 +7,14 @@ class AI:
         self.name = ''
         self.cards = []
         logging.basicConfig(filename = './log', level=logging.INFO)
-    def InfoPlayers(self, players):
+    def InfoNewGame(self, newGamedata):
+        self.cards = newGamedata[:]
         pass
-    def InfoGame(self, game):
+    def InfoGame(self, gameData):
         pass
-    def InfoGetCard(self, card):
-        self.cards = card
-    def InfoGetScore(self, player, score):
+    def InfoMove(self, cardData):
+        pass
+    def InfoScore(self, scoreData):
         pass
     def CmdPickCard(self):
         random.shuffle(self.cards)
@@ -28,14 +29,14 @@ class AI:
         data = line.strip().split('|')
         logging.info("Get Info " + str(line))
         if data[0] == 'INFO':
-            if data[1] == 'PLAYERS':
-                self.InfoPlayers(eval(data[2]))
+            if data[1] == 'NEWGAME':
+                self.InfoNewGame(eval(data[2]))
             elif data[1] == 'GAME':
                 self.InfoGame(eval(data[2]))
-            elif data[1] == 'GETCARD':
-                self.InfoGetCard(eval(data[2]))
-            elif data[1] == 'GETSCORE':
-                self.InfoGetScore(data[2], eval(data[3]))
+            elif data[1] == 'MOVE':
+                self.InfoMove(eval(data[2]))
+            elif data[1] == 'SCORE':
+                self.InfoScore(eval(data[2]))
         elif data[0] == 'CMD':
             if data[1] == 'PICKCARD':
                 self.Send(self.CmdPickCard())

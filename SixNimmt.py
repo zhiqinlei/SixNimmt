@@ -23,24 +23,13 @@ class AiHandler:
     def Receive(self, player):
         line = self.procs[player].stdout.readline()
         return line
-    def InfoPlayers(self, players):
-        self.Send('INFO|PLAYERS|'+str(players))
-    def InfoGame(self, game):
-        self.Send('INFO|GAME|'+str(game))
-    def InfoGetCard(self, card, player):
-        self.Send('INFO|GETCARD|'+str(card), player = player)
-    def InfoGetScore(self, score, player):
-        self.Send('INFO|GETSCORE|'+str(player)+'|'+str(score))
-    def InfoMove(self, move):
-        self.Send('INFO|MOVE|'+str(move))
-    def CmdPickCard(self, player):
-        self.Send('CMD|PICKCARD', player = player)
-        c = self.Receive(player)
-        return int(c.strip())
-    def CmdPickRow(self, player):
-        self.Send('CMD|PICKROW', player = player)
-        r = self.Receive(player)
-        return int(r.strip())
+    def Info(self, subHeader, data, player = None):
+        msg = 'INFO|' + subHeader + '|' + str(data)
+        self.Send(msg, player)
+    def Cmd(self, subHeader, player = None):
+        msg = 'CMD|' + subHeader
+        self.Send(msg, player)
+        return int(self.Receive(player).strip())
 
 class Player:
     def __init__(self, name, aiHandler):
@@ -48,30 +37,31 @@ class Player:
         self.cards = []
         self.score = 0
         self.aiHandler = aiHandler
-    def GetNewCards(self, cards):
+    def NewGame(self, cards):
         self.cards = cards[:]
         if self.aiHandler != None:
-            self.aiHandler.InfoGetCard(self.cards, player = self.name)
+            self.aiHandler.Info('NEWGAME', self.cards, player = self.name)
         else:
             print 'New cards:', self.cards
         
-    def PutCard(self):
+    def PickCard(self):
         if self.aiHandler != None:
-            c = self.aiHandler.CmdPickCard(self.name)
+            c = self.aiHandler.Cmd('PICKCARD', self.name)
         else:
-            print 'Current Card:', self.cards
-            c = eval(input('Please choose a card to put'))
+            print 'Current Card:', sorted(self.cards)
+            c = eval(raw_input('Please choose a card to put\n'))
         self.cards.remove(c)
         return c
+
     def PickRow(self):
         if self.aiHandler != None:
-            c = self.aiHandler.CmdPickRow(self.name) 
+            c = self.aiHandler.Cmd('PICKROW', self.name) 
         else:
             print 'Choose a row to pick'
-            c = eval(input('Please choose a row'))
+            c = eval(raw_input('Please choose a row\n'))
         return c
-    def GetScore(self, row):
-        self.aiHandler.InfoGetScore(row, player = self.name)
+    def Score(self, row):
+        self.aiHandler.Info('SCORE', row, player = self.name)
         self.score += len(row)
     def PrintData(self):
         print "Name: {}, Cards: {}, Score: {}".format(self.name, self.cards, self.score)
@@ -84,6 +74,11 @@ class SixNimmtGame:
         self.aiHandler = AiHandler()
 
     def AddPlayer(self, playerName, path):
+        '''
+        Add a player in the game
+          * playerName: the name of the player
+          * path: the path to the AI, if it's None then it's a human player
+        '''
         if playerName in self.players:
             raise NameError('Same player name')
         else:
@@ -94,26 +89,41 @@ class SixNimmtGame:
                 self.players[playerName] = Player(playerName, None)
         self.playerNum += 1
 
+    def StartTour(self, score):
+        while True:
+            self.NewGame()
+            if any([p.score > score for p in self.players.values()]):
+                self.BroadCast('Game ends!')
+                self.BroadCast([(name, self.players[name].score) for name in self.players])
+                break
+
     def NewGame(self):
+        '''
+        Create a new game, do not clear score.
+        Deal 10 cards for each player
+        '''
         self.deck = list(range(1, 105))
         random.shuffle(self.deck)
         for i in range(4):
             self.rows[i] = [self.deck.pop()]
         self.rows.sort(key = lambda x:x[-1], reverse = True)
         for p in self.players.values():
-            p.GetNewCards([self.deck.pop() for i in range(10)])
+            p.NewGame([self.deck.pop() for i in range(10)])
         for r in range(10):
             self.NewRound()
 
     def NewRound(self):
+        '''
+        A new round of a game.
+        Send the game status to all players.
+        Request a card from each player
+        Process the result
+        '''
         self.newCards = []
-        #self.PrintData()
         self.SendGameInfo()
-        self.SendPlayerInfo()
         for name, p in self.players.items():
-            self.newCards.append((p.PutCard(), name))
+            self.newCards.append((p.PickCard(), name))
         self.SendMoveInfo(self.newCards)
-        self.PrintData()
         self.ProcessGame()
         
     def ProcessGame(self):
@@ -121,7 +131,8 @@ class SixNimmtGame:
         for c, name in self.newCards:
             if c < min([self.rows[i][-1] for i in range(4)]):
                 rowNum = self.players[name].PickRow()
-                self.players[name].GetScore(self.rows[rowNum])
+                self.BroadCast("{} picked row {}:{}".format(name, rowNum, self.rows[rowNum]))
+                self.players[name].Score(self.rows[rowNum])
                 self.rows[rowNum] = [c]
                 # sort rows based on the last value
                 self.rows.sort(key = lambda x:x[-1], reverse=True)
@@ -129,7 +140,8 @@ class SixNimmtGame:
                 for r in self.rows:
                     if c > r[-1]:
                         if len(r) == 5:
-                            self.players[name].GetScore(r)
+                            self.SendScoreInfo(name, r)
+                            self.players[name].Score(r)
                             r = [c]
                         else:
                             r.append(c)
@@ -139,20 +151,46 @@ class SixNimmtGame:
 
     def SendGameInfo(self):
         game = {}
-        game['playerNum'] = self.playerNum
         game['rows'] = self.rows
-        self.aiHandler.InfoGame(game)
-
-    def SendPlayerInfo(self):
-        pInfo = {}
+        game['players'] = {}
         for p in self.players:
-            pInfo[p] = {}
-            pInfo[p]['score'] = self.players[p].score
-        self.aiHandler.InfoPlayers(pInfo)
+            game['players'][p] = self.players[p].score
+        self.aiHandler.Info('GAME', game)
+        self.BroadCast('Current Game:')
+        self.BroadCast(game['players'])
+        for r in self.rows:
+            self.BroadCast(r)
+
+    def SendScoreInfo(self, player, cards):
+        data = {}
+        data['player'] = player
+        data['cards'] = cards[:]
+        data['score'] = self.CountScore(cards)
+        self.BroadCast('Score!')
+        self.BroadCast(data)
 
     def SendMoveInfo(self, move):
-        self.aiHandler.InfoMove(move)
+        self.aiHandler.Info('MOVE', move)
+        self.BroadCast('Move!')
+        self.BroadCast(move)
 
+    def CountScore(self, cards):
+        score = 0
+        for c in cards:
+            if c == 55:
+                score += 7
+            elif c % 11 == 0:
+                score += 5
+            elif c % 10 == 0:
+                score += 3
+            elif c % 5 == 0:
+                score += 2
+            else:
+                score += 1
+        return score
+
+    def BroadCast(self, s):
+        print s
     def PrintData(self):
         print "Current Row:"
         for r in self.rows:
@@ -165,7 +203,8 @@ if __name__ == '__main__':
     game = SixNimmtGame()
     game.AddPlayer('p1', './ai/stupid.py')
     game.AddPlayer('p2', './ai/stupid.py')
-    game.AddPlayer('Player', None)
-    game.NewGame()
+    #game.AddPlayer('Player', None)
+    #game.NewGame()
+    game.StartTour(100)
     #handler = AiHandler()
     #handler.AddAi('stupid', './ai/stupid.py')

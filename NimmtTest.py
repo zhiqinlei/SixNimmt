@@ -15,36 +15,56 @@ class Tests:
     def Receive(self):
         line = self.proc.stdout.readline()
         return line
+    def TestCase(testFunc):
+        def wrapper(*args):
+            try:
+                testFunc(*args)
+            except Exception as e:
+                print testFunc.__name__, "failed!"
+                print e
+        return wrapper
+    @TestCase
+    def TestNewGame(self):
+        self.Send('INFO|NEWGAME|[1,2,3,4,5,6,7,8,9,10]')
+    @TestCase
     def TestGame(self):
-        self.Send('INFO|GAME|{}')
-    def TestGetCard(self):
-        self.Send('INFO|GETCARD|[1,2,3,4,5,6,7,8,9,10]')
-    def TestGetScore(self):
-        self.Send('INFO|GETSCORE|p1|[1,2]')
+        self.Send('INFO|GAME|{"row":[[1],[2],[3],[4]],"players":{"p1":0, "p2":1}}')
+    @TestCase
+    def TestMove(self):
+        self.Send('INFO|MOVE|{"p1":1, "p2":2}')
+    @TestCase
+    def TestScore(self):
+        self.Send('INFO|SCORE|{"player":"p1", "cards":[1,2], "score":2}')
+    @TestCase
     def TestPickCard(self):
         s = set()
-        self.Send('INFO|GETCARD|[1,2,3,4,5,6,7,8,9,10]')
+        self.Send('INFO|NEWGAME|[1,2,3,4,5,6,7,8,9,10]')
+        self.Send('INFO|GAME|{"row":[[1],[2],[3],[4]],"players":{"p1":0, "p2":1}}')
         for i in range(10):
             self.Send('CMD|PICKCARD')
             s.add(int(self.Receive()))
         if s != set(range(1,11)):
-            print "Failure! Pick Card from 1-10 results in", s
+            raise Exception("Failure! Pick Card from 1-10 results in", s)
+    @TestCase
     def TestPickRow(self):
         self.Send('CMD|PICKROW')
         r = int(self.Receive())
         if not 0 <= r <= 3:
-            print "Failure! Pick row gives back", r
+            raise Exception("Failure! Pick row gives back", r)
 
     def RunTests(self):
+        self.TestNewGame()
         self.TestGame()
-        self.TestGetCard()
+        self.TestMove()
+        self.TestScore()
         self.TestPickCard()
-        self.TestGetScore()
+        self.TestPickRow()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('files', nargs='*')
+    parser.add_argument('files', nargs='+')
     options = parser.parse_args()
+
     for f in options.files:
         t = Tests(f)
         t.RunTests()
