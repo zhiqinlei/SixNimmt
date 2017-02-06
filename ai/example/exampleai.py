@@ -7,6 +7,8 @@ class AI:
         self.name = ''
         self.cards = []
         logging.basicConfig(filename = './log', level=logging.INFO)
+    def InfoSetup(self, setupData):
+        pass
     def InfoNewGame(self, newGamedata):
         self.cards = newGamedata[:]
         pass
@@ -29,7 +31,9 @@ class AI:
         data = line.strip().split('|')
         logging.info("Get Info " + str(line))
         if data[0] == 'INFO':
-            if data[1] == 'NEWGAME':
+            if data[1] == 'SETUP':
+                self.InfoSetup(eval(data[2]))
+            elif data[1] == 'NEWGAME':
                 self.InfoNewGame(eval(data[2]))
             elif data[1] == 'GAME':
                 self.InfoGame(eval(data[2]))

@@ -12,6 +12,9 @@ class AiHandler:
         if os.path.exists(path):
             p = Popen(['python', path], stdin=PIPE, stdout=PIPE, bufsize=0)
             self.procs[name] = p
+            d = {}
+            d["name"] = name
+            self.Info('SETUP', d, player = name);
         else:
             raise Exception("there's no path" + path)
         print "Added AI", name, path
@@ -215,15 +218,8 @@ if __name__ == '__main__':
     parser.add_argument('-r', type=int, default=100)
     options = parser.parse_args()
     game = SixNimmtGame(broadCast = False)
-    game.AddPlayer('p1', './ai/test/testai.py')
-    game.AddPlayer('p2', './ai/test/testai.py')
-    game.AddPlayer('p3', './ai/test/testai.py')
-    game.AddPlayer('p4', './ai/test/testai.py')
-    game.AddPlayer('p5', './ai/test/testai.py')
-    game.AddPlayer('p6', './ai/test/testai.py')
-    #game.AddPlayer('GT', './ai/gaotian/GTNimmt.py')
+    game.AddPlayer('p1', './ai/example/exampleai.py')
+    game.AddPlayer('p2', './ai/example/exampleai.py')
     #game.AddPlayer('Player', None)
     #game.NewGame()
     game.StartTour(options.r)
-    #handler = AiHandler()
-    #handler.AddAi('stupid', './ai/stupid.py')

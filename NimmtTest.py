@@ -24,6 +24,9 @@ class Tests:
                 print e
         return wrapper
     @TestCase
+    def TestSetup(self):
+        self.Send('INFO|SETUP|{"name":"p1"}')
+    @TestCase
     def TestNewGame(self):
         self.Send('INFO|NEWGAME|[1,2,3,4,5,6,7,8,9,10]')
     @TestCase
@@ -54,6 +57,7 @@ class Tests:
             raise Exception("Failure! Pick row gives back", r)
 
     def RunTests(self):
+        self.TestSetup()
         self.TestNewGame()
         self.TestGame()
         self.TestMove()

@@ -28,6 +28,17 @@ game is sending.
 The detailed message type and data are listed in this section. 
 
 ```
+INFO|SETUP|<DATA>:
+```
+
+This is a initialization message for AI. ```<DATA>``` is a dictionary with one
+key(for now).
+
+ * "name": the official name you will have when you receive data in the future
+
+_example:INFO|SETUP|{"name":"p1"}_
+
+```
 INFO|NEWGAME|<DATA>:
 ```
 
