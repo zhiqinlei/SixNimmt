@@ -201,8 +201,8 @@ class SixNimmtGame:
 
 if __name__ == '__main__':
     game = SixNimmtGame()
-    game.AddPlayer('p1', './ai/stupid.py')
-    game.AddPlayer('p2', './ai/stupid.py')
+    game.AddPlayer('p1', './ai/example/exampleai.py')
+    game.AddPlayer('p2', './ai/example/exampleai.py')
     #game.AddPlayer('Player', None)
     #game.NewGame()
     game.StartTour(100)
