@@ -64,9 +64,8 @@ class Player:
             print 'Choose a row to pick'
             c = eval(raw_input('Please choose a row\n'))
         return c
-    def Score(self, row):
-        self.aiHandler.Info('SCORE', row, player = self.name)
-        self.score += len(row)
+    def Score(self, score):
+        self.score += score
     def PrintData(self):
         print "Name: {}, Cards: {}, Score: {}".format(self.name, self.cards, self.score)
 
@@ -142,7 +141,8 @@ class SixNimmtGame:
             if c < min([self.rows[i][-1] for i in range(4)]):
                 rowNum = self.players[name].PickRow()
                 self.BroadCast("{} picked row {}:{}".format(name, rowNum, self.rows[rowNum]))
-                self.players[name].Score(self.rows[rowNum])
+                self.SendScoreInfo(name, self.rows[rowNum])
+                self.players[name].Score(self.CountScore(self.rows[rowNum]))
                 self.rows[rowNum] = [c]
                 # sort rows based on the last value
                 self.rows.sort(key = lambda x:x[-1], reverse=True)
@@ -151,7 +151,7 @@ class SixNimmtGame:
                     if c > r[-1]:
                         if len(r) == 5:
                             self.SendScoreInfo(name, r)
-                            self.players[name].Score(r)
+                            self.players[name].Score(self.CountScore(r))
                             r[:] = [c]
                         else:
                             r.append(c)
@@ -176,6 +176,7 @@ class SixNimmtGame:
         data['player'] = player
         data['cards'] = cards[:]
         data['score'] = self.CountScore(cards)
+        self.aiHandler.Info('SCORE', data)
         self.BroadCast('Score!')
         self.BroadCast(data)
 
@@ -217,7 +218,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-r', type=int, default=100)
     options = parser.parse_args()
-    game = SixNimmtGame(broadCast = False)
+    game = SixNimmtGame(broadCast = True)
     game.AddPlayer('p1', './ai/example/exampleai.py')
     game.AddPlayer('p2', './ai/example/exampleai.py')
     #game.AddPlayer('Player', None)
