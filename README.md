@@ -1,6 +1,7 @@
 #Put your AI folder in folder ./ai
 
 ## Game Rule
+
 Please follow this [link](https://en.wikipedia.org/wiki/6_Nimmt!)
 
 ##Comunication Protocol:
@@ -8,9 +9,8 @@ Please follow this [link](https://en.wikipedia.org/wiki/6_Nimmt!)
 All the communications are by stdin and stdout.
 
 Every packet from the game to the ai are in the following form:
-```
-<HEADER>|<SUBHEADER>|<DATA>
-```
+
+```<HEADER>|<SUBHEADER>|<DATA>```
 
 ```<HEADER>``` could be either INFO or CMD. INFO requires no response from the AI
 client, whereas CMD requires a single line of respose from stdout from the AI
@@ -22,6 +22,8 @@ game is sending.
 ```<DATA>``` is the corresponding data for ```<SUBHEADER>```, which will be explained below.
 
 ## Message explanation 
+
+The detailed message type and data are listed in this section. 
 
 ```INFO|NEWGAME|<DATA>:```
 
@@ -39,7 +41,7 @@ Send the info of the game data. This packet will be sent before every new round.
  * "players": a dictionary of all the players, in which the key is the name of 
    the player and the value is their score
 
-_example:INFO|GAME|{"row":[[1],[2],[3],[4]],"players":{"p1":0, "p2":1}}_
+_example:INFO|GAME|{"rows":[[1],[2],[3],[4]],"players":{"p1":0, "p2":1}}_
 
 ```INFO|MOVE|<DATA>:```
 

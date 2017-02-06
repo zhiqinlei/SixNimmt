@@ -28,9 +28,10 @@ class Tests:
         self.Send('INFO|NEWGAME|[1,2,3,4,5,6,7,8,9,10]')
     @TestCase
     def TestGame(self):
-        self.Send('INFO|GAME|{"row":[[1],[2],[3],[4]],"players":{"p1":0, "p2":1}}')
+        self.Send('INFO|GAME|{"rows":[[1],[2],[3],[4]],"players":{"p1":0, "p2":1}}')
     @TestCase
     def TestMove(self):
+        self.Send('INFO|NEWGAME|[11,22,33,44,55,66,77,88,99,101]')
         self.Send('INFO|MOVE|{"p1":1, "p2":2}')
     @TestCase
     def TestScore(self):
@@ -39,7 +40,7 @@ class Tests:
     def TestPickCard(self):
         s = set()
         self.Send('INFO|NEWGAME|[1,2,3,4,5,6,7,8,9,10]')
-        self.Send('INFO|GAME|{"row":[[1],[2],[3],[4]],"players":{"p1":0, "p2":1}}')
+        self.Send('INFO|GAME|{"rows":[[1],[2],[3],[4]],"players":{"p1":0, "p2":1}}')
         for i in range(10):
             self.Send('CMD|PICKCARD')
             s.add(int(self.Receive()))

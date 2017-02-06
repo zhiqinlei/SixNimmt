@@ -9,7 +9,7 @@ class AiHandler:
         self.procs = {}
     def AddAi(self, name, path):
         if os.path.exists(path):
-            p = Popen(path, stdin=PIPE, stdout=PIPE, bufsize=0)
+            p = Popen(['python', path], stdin=PIPE, stdout=PIPE, bufsize=0)
             self.procs[name] = p
         else:
             raise Exception("there's no path" + path)
@@ -122,13 +122,13 @@ class SixNimmtGame:
         self.newCards = []
         self.SendGameInfo()
         for name, p in self.players.items():
-            self.newCards.append((p.PickCard(), name))
+            self.newCards.append((name, p.PickCard()))
         self.SendMoveInfo(self.newCards)
         self.ProcessGame()
         
     def ProcessGame(self):
-        self.newCards.sort()
-        for c, name in self.newCards:
+        self.newCards.sort(key = lambda x:x[-1])
+        for name, c in self.newCards:
             if c < min([self.rows[i][-1] for i in range(4)]):
                 rowNum = self.players[name].PickRow()
                 self.BroadCast("{} picked row {}:{}".format(name, rowNum, self.rows[rowNum]))
@@ -142,7 +142,7 @@ class SixNimmtGame:
                         if len(r) == 5:
                             self.SendScoreInfo(name, r)
                             self.players[name].Score(r)
-                            r = [c]
+                            r[:] = [c]
                         else:
                             r.append(c)
                         break
@@ -169,7 +169,10 @@ class SixNimmtGame:
         self.BroadCast('Score!')
         self.BroadCast(data)
 
-    def SendMoveInfo(self, move):
+    def SendMoveInfo(self, cardInfo):
+        move = {}
+        for name, card in cardInfo:
+            move[name] = card
         self.aiHandler.Info('MOVE', move)
         self.BroadCast('Move!')
         self.BroadCast(move)
@@ -202,7 +205,8 @@ class SixNimmtGame:
 if __name__ == '__main__':
     game = SixNimmtGame()
     game.AddPlayer('p1', './ai/example/exampleai.py')
-    game.AddPlayer('p2', './ai/example/exampleai.py')
+    game.AddPlayer('p2', './ai/example/exampleai.pyc')
+    game.AddPlayer('GT', './ai/gaotian/GTNimmt.py')
     #game.AddPlayer('Player', None)
     #game.NewGame()
     game.StartTour(100)
