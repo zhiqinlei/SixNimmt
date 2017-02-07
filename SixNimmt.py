@@ -12,9 +12,6 @@ class AiHandler:
         if os.path.exists(path):
             p = Popen(['python', path], stdin=PIPE, stdout=PIPE, bufsize=0)
             self.procs[name] = p
-            d = {}
-            d["name"] = name
-            self.Info('SETUP', d, player = name);
         else:
             raise Exception("there's no path" + path)
         print "Added AI", name, path
@@ -97,6 +94,13 @@ class SixNimmtGame:
             else:
                 self.players[playerName] = Player(playerName, None)
         self.playerNum += 1
+
+    def Setup(self):
+        for name in self.players:
+            data = {}
+            data["name"] = name
+            data["playerNum"] = self.playerNum
+            self.aiHandler.Info('SETUP', data, name)
 
     def StartTour(self, score):
         while True:
@@ -225,5 +229,6 @@ if __name__ == '__main__':
     game.AddPlayer('p4', './ai/test/testai.py')
     game.AddPlayer('p5', './ai/test/testai.py')
     #game.AddPlayer('Player', None)
+    game.Setup()
     #game.NewGame()
     game.StartTour(options.r)
