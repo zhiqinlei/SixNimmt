@@ -25,7 +25,7 @@ class Tests:
         return wrapper
     @TestCase
     def TestSetup(self):
-        self.Send('INFO|SETUP|{"name":"p1"}')
+        self.Send('INFO|SETUP|{"name":"p1", "playerNum":2}')
     @TestCase
     def TestNewGame(self):
         self.Send('INFO|NEWGAME|[1,2,3,4,5,6,7,8,9,10]')
