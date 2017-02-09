@@ -115,13 +115,16 @@ class SixNimmtGame:
         Create a new game, do not clear score.
         Deal 10 cards for each player
         '''
+        self.BroadCast("New Game Begins!")
         self.deck = list(range(1, 105))
         random.shuffle(self.deck)
         for i in range(4):
             self.rows[i] = [self.deck.pop()]
         self.rows.sort(key = lambda x:x[-1], reverse = True)
         for p in self.players.values():
-            p.NewGame([self.deck.pop() for i in range(10)])
+            cards = [self.deck.pop() for i in range(10)]
+            self.BroadCast("{} got {}".format(p.name, cards))
+            p.NewGame(cards)
         for r in range(10):
             self.NewRound()
 
@@ -221,10 +224,11 @@ class SixNimmtGame:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-r', type=int, default=100)
+    parser.add_argument('-seed', type=int, default=None)
     options = parser.parse_args()
+    random.seed(options.seed)
     game = SixNimmtGame(broadCast = True)
     game.AddPlayer('p1', './ai/example/exampleai.py')
     game.AddPlayer('p2', './ai/example/exampleai.py')
     game.Setup()
-    #game.NewGame()
     game.StartTour(options.r)
