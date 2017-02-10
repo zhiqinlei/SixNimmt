@@ -57,6 +57,8 @@ class Player:
         else:
             print 'Current Card:', sorted(self.cards)
             c = eval(raw_input('Please choose a card to put\n'))
+        if c not in self.cards:
+            raise Exception("Error! Card {} is played but the player {} does not have it!".format(c, self.name))
         self.cards.remove(c)
         return c
 
@@ -66,6 +68,8 @@ class Player:
         else:
             print 'Choose a row to pick'
             c = eval(raw_input('Please choose a row\n'))
+        if c not in range(4):
+            raise Exception("Error! Player {} picked row {} and it's out of range!".format(self.name, c))
         return c
     def Score(self, score):
         self.score += score
