@@ -2,11 +2,13 @@
 import sys
 import random
 import logging
+import os
 class AI:
     def __init__(self):
         self.name = ''
         self.cards = []
-        logging.basicConfig(filename = './log', level=logging.INFO)
+        self.logFileName = os.path.join(os.path.dirname(__file__), 'log')
+        logging.basicConfig(filename = self.logFileName, level=logging.INFO)
     def InfoSetup(self, setupData):
         pass
     def InfoNewGame(self, newGamedata):
@@ -17,6 +19,8 @@ class AI:
     def InfoMove(self, cardData):
         pass
     def InfoScore(self, scoreData):
+        pass
+    def InfoGameEnd(self, gameEndData):
         pass
     def CmdPickCard(self):
         random.shuffle(self.cards)
@@ -41,20 +45,23 @@ class AI:
                 self.InfoMove(eval(data[2]))
             elif data[1] == 'SCORE':
                 self.InfoScore(eval(data[2]))
+            elif data[1] == 'GAMEEND':
+                self.InfoGameEnd(eval(data[2]))
+                return False
         elif data[0] == 'CMD':
             if data[1] == 'PICKCARD':
                 self.Send(self.CmdPickCard())
             elif data[1] == 'PICKROW':
                 self.Send(self.CmdPickRow())
-        elif data[0] == 'HELLO':
-            self.Send('WORLD')
+        return True
     def Send(self, data):
         logging.info('Send Info ' + str(data))
         print str(data)
         sys.stdout.flush()
     def Start(self):
         while True:
-            self.ProcessInfo()
+            if not self.ProcessInfo():
+                break
 
 if __name__ == '__main__':
     ai = AI()

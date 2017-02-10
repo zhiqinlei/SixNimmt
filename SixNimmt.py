@@ -4,6 +4,9 @@ import random
 from subprocess import Popen, PIPE
 import os
 import argparse
+import re
+import sys
+import itertools
 
 class AiHandler:
     def __init__(self):
@@ -33,10 +36,13 @@ class AiHandler:
         return int(self.Receive(player).strip())
 
 class Player:
-    def __init__(self, name, aiHandler):
+    def __init__(self, name, path):
         self.name = name
         self.cards = []
         self.score = 0
+        self.path = path
+        self.aiHandler = None
+    def SetAiHandler(aiHandler):
         self.aiHandler = aiHandler
     def NewGame(self, cards):
         self.cards = cards[:]
@@ -79,35 +85,60 @@ class SixNimmtGame:
             else:
                 raise Exception("Wrong keyword "+key)
 
-    def AddPlayer(self, playerName, path):
+    def AddPlayer(self, path):
         '''
         Add a player in the game
-          * playerName: the name of the player
-          * path: the path to the AI, if it's None then it's a human player
+          * path: the path to the AI
         '''
+        playerName = path.split('/')[-1].split('.')[0]
         if playerName in self.players:
-            raise NameError('Same player name')
-        else:
-            if path != None:
-                self.players[playerName] = Player(playerName, self.aiHandler)
-                self.aiHandler.AddAi(playerName, path)
-            else:
-                self.players[playerName] = Player(playerName, None)
+            suffix = 2
+            newPlayerName = playerName + str(suffix)
+            while newPlayerName in self.players:
+                suffix += 1
+                newPlayerName = playerName + str(suffix) 
+            playerName = newPlayerName
+        self.players[playerName] = Player(playerName, path)
         self.playerNum += 1
 
     def Setup(self):
+        self.aiHandler = AiHandler()
         for name in self.players:
+            self.aiHandler.AddAi(name, self.players[name].path)
+            self.players[name].aiHandler = self.aiHandler
             data = {}
             data["name"] = name
             data["playerNum"] = self.playerNum
             self.aiHandler.Info('SETUP', data, name)
 
+    def OfficialGame(self, rounds):
+        self.Setup()
+        for r in range(rounds):
+            self.deck = list(range(1,105))
+            random.shuffle(self.deck)
+            roundRows = [self.deck.pop() for i in range(4)]
+            hands = [[self.deck.pop() for i in range(10)] for j in range(self.playerNum)]
+            for shift in range(self.playerNum):
+                hands = hands[-1:] + hands[:-1]
+                for i in range(4):
+                    self.rows[i] = [roundRows[i]] 
+                self.rows.sort(key = lambda x:x[-1], reverse = True)
+                idx = 0
+                for p in self.players.values():
+                    cards = hands[idx]
+                    self.BroadCast('{} got {}'.format(p.name, cards))
+                    p.NewGame(cards)
+                    idx += 1
+                for i in range(10):
+                    self.NewRound()
+        self.SendGameEndInfo()
+            
     def StartTour(self, score):
+        self.Setup()
         while True:
             self.NewGame()
             if any([p.score > score for p in self.players.values()]):
-                self.BroadCast('Game ends!')
-                self.BroadCast([(name, self.players[name].score) for name in self.players])
+                self.SendGameEndInfo()
                 break
 
     def NewGame(self):
@@ -194,7 +225,24 @@ class SixNimmtGame:
         self.aiHandler.Info('MOVE', move)
         self.BroadCast('Move!')
         self.BroadCast(move)
+    
+    def SendGameEndInfo(self):
+        finalScore = {}
+        winner = None
+        winScore = -1
+        for p in self.players:
+            if winner == None or self.players[p].score < winScore:
+                winner = p
+                winScore = self.players[p].score
+            finalScore[p] = self.players[p].score
+        self.aiHandler.Info('GAMEEND', finalScore)
+        self.BroadCast('The game ends!')
+        self.BroadCast('Final score: {}'.format(finalScore))
+        self.BroadCast('Winner is {}'.format(p))
 
+    '''
+    Utilities 
+    '''
     def CountScore(self, cards):
         score = 0
         for c in cards:
@@ -223,12 +271,26 @@ class SixNimmtGame:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-r', type=int, default=100)
-    parser.add_argument('-seed', type=int, default=None)
+    parser.add_argument('--s', '-score', type=int, default=100, help='the score where the game ends')
+    parser.add_argument('-seed', type=int, default=None, help='set random seed to reproduce the game')
+    parser.add_argument('--q', '-quiet', action='store_true', help='do not print any info from the game')
+    parser.add_argument('-official', action='store_true', help='use official mode, same cards will be sent to players')
+    parser.add_argument('--r', type=int, default = 1, help='only works in official mode, how many rounds you want to run')
+    parser.add_argument('aiPaths', nargs='+', help='paths to ai')
     options = parser.parse_args()
     random.seed(options.seed)
-    game = SixNimmtGame(broadCast = True)
-    game.AddPlayer('p1', './ai/example/exampleai.py')
-    game.AddPlayer('p2', './ai/example/exampleai.py')
-    game.Setup()
-    game.StartTour(options.r)
+    game = SixNimmtGame(broadCast = not options.q)
+    for path in options.aiPaths:
+        m = re.search('^([0-9]*)\*(.*)', path)
+        if m != None:
+            for i in range(int(m.group(1))):
+                game.AddPlayer(m.group(2))
+        else:
+            game.AddPlayer(path)
+    if not 2 <= game.playerNum <= 10:
+        print 'You need 2 to 10 AIs to start the game'
+        sys.exit(1)
+    if options.official:
+        game.OfficialGame(int(options.r))
+    else:
+        game.StartTour(options.s)
