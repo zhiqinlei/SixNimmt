@@ -2,6 +2,7 @@
 import argparse
 import os
 from subprocess import Popen, PIPE
+import termcolor
 
 class Tests:
     def __init__(self, path):
@@ -19,8 +20,9 @@ class Tests:
         def wrapper(*args):
             try:
                 testFunc(*args)
+                print "{:15} {}".format(testFunc.__name__, termcolor.colored("passed!", 'green'))
             except Exception as e:
-                print testFunc.__name__, "failed!"
+                print "{:15} {}".format(testFunc.__name__, termcolor.colored("failed!", 'red'))
                 print e
         return wrapper
     @TestCase
@@ -40,14 +42,17 @@ class Tests:
     def TestScore(self):
         self.Send('INFO|SCORE|{"player":"p1", "cards":[1,2], "score":2}')
     @TestCase
+    def TestGameEnd(self):
+        self.Send('INFO|GAMEEND|{"p1":105, "p2":78}')
+    @TestCase
     def TestPickCard(self):
         s = set()
-        self.Send('INFO|NEWGAME|[1,2,3,4,5,6,7,8,9,10]')
+        self.Send('INFO|NEWGAME|[11,12,13,14,15,16,17,18,19,20]')
         self.Send('INFO|GAME|{"rows":[[1],[2],[3],[4]],"players":{"p1":0, "p2":1}}')
         for i in range(10):
             self.Send('CMD|PICKCARD')
             s.add(int(self.Receive()))
-        if s != set(range(1,11)):
+        if s != set(range(11,21)):
             raise Exception("Failure! Pick Card from 1-10 results in", s)
     @TestCase
     def TestPickRow(self):
@@ -64,6 +69,7 @@ class Tests:
         self.TestScore()
         self.TestPickCard()
         self.TestPickRow()
+        self.TestGameEnd()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
