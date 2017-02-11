@@ -275,11 +275,11 @@ class SixNimmtGame:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--s', '-score', type=int, default=100, help='the score where the game ends')
-    parser.add_argument('-seed', type=int, default=None, help='set random seed to reproduce the game')
-    parser.add_argument('--q', '-quiet', action='store_true', help='do not print any info from the game')
-    parser.add_argument('-official', action='store_true', help='use official mode, same cards will be sent to players')
-    parser.add_argument('--r', type=int, default = 1, help='only works in official mode, how many rounds you want to run')
+    parser.add_argument('-s', '--score', type=int, default=100, help='the score where the game ends')
+    parser.add_argument('--seed', type=int, default=None, help='set random seed to reproduce the game')
+    parser.add_argument('-q', '--quiet', action='store_true', help='do not print any info from the game')
+    parser.add_argument('--official', action='store_true', help='use official mode, same cards will be sent to players')
+    parser.add_argument('-r', type=int, default = 1, help='only works in official mode, how many rounds you want to run')
     parser.add_argument('aiPaths', nargs='+', help='paths to ai')
     options = parser.parse_args()
     random.seed(options.seed)
