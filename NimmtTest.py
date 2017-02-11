@@ -2,7 +2,6 @@
 import argparse
 import os
 from subprocess import Popen, PIPE
-import termcolor
 
 class Tests:
     def __init__(self, path):
@@ -20,9 +19,9 @@ class Tests:
         def wrapper(*args):
             try:
                 testFunc(*args)
-                print "{:15} {}".format(testFunc.__name__, termcolor.colored("passed!", 'green'))
+                print "{:15} {}".format(testFunc.__name__, "passed!")
             except Exception as e:
-                print "{:15} {}".format(testFunc.__name__, termcolor.colored("failed!", 'red'))
+                print "{:15} {}".format(testFunc.__name__, "failed!")
                 print e
         return wrapper
     @TestCase
