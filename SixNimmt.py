@@ -283,7 +283,7 @@ if __name__ == '__main__':
     parser.add_argument('aiPaths', nargs='+', help='paths to ai')
     options = parser.parse_args()
     random.seed(options.seed)
-    game = SixNimmtGame(broadCast = not options.q)
+    game = SixNimmtGame(broadCast = not options.quiet)
     for path in options.aiPaths:
         m = re.search('^([0-9]*)\*(.*)', path)
         if m != None:
@@ -297,4 +297,4 @@ if __name__ == '__main__':
     if options.official:
         game.OfficialGame(int(options.r))
     else:
-        game.StartTour(options.s)
+        game.StartTour(options.score)
