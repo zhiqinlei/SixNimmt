@@ -23,7 +23,8 @@ class AI:
     def InfoGameEnd(self, gameEndData):
         pass
     def CmdPickCard(self):
-        return min(self.cards)
+        random.shuffle(self.cards)
+        return self.cards.pop()
     def CmdPickRow(self):
         return random.randint(0,3)
     def ProcessInfo(self):
